@@ -1,0 +1,7 @@
+{
+  "name": "tLogClient",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
