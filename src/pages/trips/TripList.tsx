@@ -1,4 +1,25 @@
-import { IonToast, IonRefresher, IonRefresherContent, IonSpinner, IonButtons, IonButton, IonContent, IonHeader, IonIcon, IonItem, IonList, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItemSliding, IonItemOption, IonItemOptions } from '@ionic/react';
+import {
+    IonToast,
+    IonRefresher,
+    IonRefresherContent,
+    IonAlert,
+    IonSpinner,
+    IonButtons,
+    IonButton,
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonItem,
+    IonList,
+    IonMenuButton,
+    IonPage,
+    IonTitle,
+    IonToolbar,
+    IonItemSliding,
+    IonItemOption,
+    IonItemOptions,
+    IonImg
+} from '@ionic/react';
 import {addCircleOutline, beer, boat, create, train, trash} from 'ionicons/icons';
 import React, {useEffect, useState} from 'react';
 import {RouteComponentProps} from "react-router";
@@ -8,7 +29,7 @@ import {TripState} from "../../reducers/reducers";
 import {ThunkDispatch} from 'redux-thunk';
 import {fetchTripsAction, fetchTripsActions, TripsResult} from "../../actions/actions";
 import {RefresherEventDetail} from '@ionic/core';
-import {fetchMyTrips} from "../../services/trips";
+import {deleteTrip, fetchMyTrips} from "../../services/trips";
 import {executeDelayed} from "../../helpers/async-helpers";
 
 const TripsList: React.FC<RouteComponentProps> = ({history}) => {
@@ -33,10 +54,13 @@ const TripsList: React.FC<RouteComponentProps> = ({history}) => {
 
     const loadTrip = (id: string) => executeDelayed(200, () => history.push(`/trips/edit/${id}`))
 
+    const [showAlertDelete, setShowAlertDelete] = useState(false);
+
     const deleteThisTrip = (id: string) => {
         setCurrentTrip(id);
-        //to be implemented by you:
-        //setShowAlert(true);
+        setShowAlertDelete(true)
+
+
     }
 
     const ListTrips = () => {
@@ -57,8 +81,14 @@ const TripsList: React.FC<RouteComponentProps> = ({history}) => {
                 </IonItemSliding>
             );
         });
-        //To be implemented: if a the list is empty - show something nice
-        return <IonList>{items}</IonList>;
+
+        if(trips.length === 0)
+        {
+            return <img src='assets/img/noList.jpg'></img>;
+        }else{
+            return <IonList>{items}</IonList>;
+        }
+
     };
 
     return (
@@ -93,6 +123,31 @@ const TripsList: React.FC<RouteComponentProps> = ({history}) => {
                     message={'You can edit/delete trips by swiping them to the left!'}
                     duration={5000}
                     color=''
+                />
+                <IonAlert
+                    isOpen={showAlertDelete}
+                    onDidDismiss={() => setShowAlertDelete(false)}
+                    cssClass='my-custom-class'
+                    header={'Confirm!'}
+                    message={'Message <strong>Are you sure?</strong>!!!'}
+                    buttons={[
+                        {
+                            text: 'Cancel',
+                            role: 'cancel',
+                            cssClass: 'secondary',
+                            handler: blah => {
+                                console.log('Confirm Cancel: blah');
+                            }
+                        },
+                        {
+                            text: 'Yes',
+                            handler: () => {
+                                deleteTrip(token,currentTrip)
+                                    .then(t => thunkDispatch(fetchTripsAction()))
+                                console.log('Confirm Okay');
+                            }
+                        }
+                    ]}
                 />
             </IonContent>
         </IonPage>

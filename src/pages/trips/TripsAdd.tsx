@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import * as Validator from '../../helpers/validators';
 import {
     IonButton,
@@ -7,6 +7,7 @@ import {
     IonHeader,
     IonMenuButton,
     IonTitle,
+    IonSpinner,
     IonToolbar,
     IonPage
 } from '@ionic/react';
@@ -15,11 +16,13 @@ import {RouteComponentProps} from 'react-router';
 import {login, register} from '../../services/security';
 import {executeDelayed} from '../../helpers/async-helpers';
 import {Trip, User} from '../../types/types';
-import {fetchTripAction, fetchTripActions, loggedIn, TripsResult} from '../../actions/actions';
+import {fetchTripAction, fetchTripActions, fetchTripsAction, TripsResult} from '../../actions/actions';
 import {useDispatch, useSelector} from 'react-redux';
-import {addTrip} from "../../services/trips";
+import {addTrip, fetchTrip, updateTrip} from "../../services/trips";
 import {AppState} from "../../index";
-import {ThunkDispatch} from "redux-thunk";
+import thunk, {ThunkDispatch} from "redux-thunk";
+import {Simulate} from "react-dom/test-utils";
+import {TripState} from "../../reducers/reducers";
 
 type formData = Readonly<Trip>;
 
@@ -35,63 +38,80 @@ const formDescription: FormDescription<formData> = {
         {name: 'end', label: 'End Date', type: 'date',
             position: 'floating', color: 'primary'}
     ],
-    submitLabel: 'Add'
+    submitLabel: 'Update'
 }
 
 const {Form ,loading, error} = BuildForm(formDescription);
 
-//export const TripsAdd: React.FunctionComponent<RouteComponentProps<any>> = (props) => {
-
 export default (mode: 'add' | 'edit'): React.FC<RouteComponentProps<{ id: string }>> =>
     ({ history, match }) => {
 
-    const thunkDispatch: ThunkDispatch<AppState, null, TripsResult> = useDispatch();
+        const thunkDispatch: ThunkDispatch<AppState, null, TripsResult> = useDispatch();
 
-    const dispatch = useDispatch();
-    const token = useSelector<AppState, string | null>(state => state.tLogApp.user.token || null);
+        const {currentTrip, isLoading} = useSelector<AppState, any>(s => s.tLogApp.trips);
+        useEffect(() => {
+            if (mode === 'edit' && (!currentTrip || currentTrip._id !== match.params.id)) {
+                thunkDispatch(fetchTripAction(match.params.id))
+            }
+        }, []);
 
-    const submit = (trip: Trip) => {
-        dispatch(loading(true))
-        addTrip(token, trip)
-            .then(trip=> dispatch(fetchTripActions.success(trip)))
-            .then(t=> thunkDispatch(fetchTripActions()))
-            .then(t=> executeDelayed(200, () => history.goBack()))
-            .catch((err:Error) => {
-                dispatch(error('Error while Adding:' + err.message));
-            })
-           .finally(() => dispatch(loading(false)))
-    };
-    return (
-        <IonPage>
-            <IonHeader>
-                <IonToolbar>
-                    <IonButtons slot="start">
-                        <IonMenuButton />
-                    </IonButtons>
-                    {(() => {
-                        if (mode == "add") {
-                            return (
-                                <IonTitle>Add Trip</IonTitle>
-                            );
-                        } else {
-                            return (
-                                <IonTitle>Edit Trip</IonTitle>
-                            );
-                        }
-                    })()}
-                    <IonTitle>Add Trip</IonTitle>
-                </IonToolbar>
-            </IonHeader>
+        const dispatch = useDispatch();
+        const token = useSelector<AppState, string | null>(state => state.tLogApp.user.token || null);
+        const submit = (trip: Trip) => {
+            dispatch(loading(true));
+            if(mode=='add') {
+                    addTrip(token, trip)
+                        .then(trip => dispatch(fetchTripActions.success(trip)))
+                        .then(t => thunkDispatch(fetchTripsAction()))
+                        .then(t => executeDelayed(200, () => history.goBack()))
+                        .catch((err: Error) => {
+                            dispatch(error('Error while adding a Trip: ' + err.message));
+                        })
+                        .finally(() => dispatch(loading(false)))
+                } else {
 
-            <IonContent>
-                <Form handleSubmit={submit}/>
-                {/* <IonButton expand="block" color="medium" onClick={e => {
-                    e.preventDefault();
-                    props.history.push('/login/register')
-                } }>Create an Account</IonButton>*/}
-            </IonContent>
-        </IonPage>
-    );
-}
+                    updateTrip(token, trip)
+                        .then(trip => dispatch(fetchTripActions.success(trip)))
+                        .then(t => thunkDispatch(fetchTripsAction()))
+                        .then(t => executeDelayed(200, () => history.goBack()))
+                        .catch((err: Error) => {
+                            dispatch(error('Error while editing a Trip: ' + err.message));
+                        })
+                        .finally(() => dispatch(loading(false)))
+                }
+            }
 
-//export default TripsAdd
+        return (
+            <IonPage>
+                <IonHeader>
+                    <IonToolbar>
+                        <IonButtons slot="start">
+                            <IonMenuButton />
+                        </IonButtons>
+
+                        {(() => {
+                            if (mode == "add") {
+                                return (
+                                    <IonTitle>Add Trip</IonTitle>
+                                );
+                            } else {
+                                return (
+                                    <IonTitle>Edit Trip</IonTitle>
+                                );
+                            }
+                        })()}
+
+                    </IonToolbar>
+                </IonHeader>
+
+                <IonContent>
+                    {isLoading ? <div><IonSpinner />...Loading POI</div> :
+                        mode === 'edit' ?
+                            currentTrip ? <Form handleSubmit={submit} initialState={currentTrip} /> : <p>NO TRIP</p> :
+                            <Form handleSubmit={submit} />
+                    }
+                </IonContent>
+
+            </IonPage>
+        );
+    }

@@ -29,7 +29,6 @@ import Logout from "./pages/logout/Logout";
 import TripsList from "./pages/trips/TripList";
 import {SecureRoute} from "./components/SecureRoute";
 import TripsAdd from "./pages/trips/TripsAdd";
-import TripsEdit from "./pages/trips/TripsEdit";
 
 const App: React.FC = () => {
     return (
