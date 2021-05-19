@@ -23,6 +23,9 @@ export interface POI {
     createdAt?: Date;
 }
 
+export type POIType =  'current'|'bar'|'sight'|'restaurant'|'museum'|'church'|'pub'|'hotel';
+
+
 export interface Trip {
     _id: string,
     name: string,
