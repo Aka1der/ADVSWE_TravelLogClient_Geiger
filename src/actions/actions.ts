@@ -1,9 +1,10 @@
 import { createAction, createAsyncAction, createCustomAction } from 'typesafe-actions';
-import {Trip, TripList, User} from '../types/types';
+import {POI, Trip, TripList, User} from '../types/types';
 import {AppState} from "../index";
 import {ThunkAction} from "redux-thunk";
 import {AnyAction} from "redux";
-import {deleteTrip, fetchMyTrips, fetchTrip} from "../services/trips";
+import {deleteTrip, fetchMyTrips, fetchTrip, removePOI} from "../services/trips";
+import {Dispatch} from "react";
 
 
 export interface LoginInfo {
@@ -65,3 +66,25 @@ export const deleteTripAction = (id: string):ThunkAction<Promise<TripsResult | D
 
 export const hasSeenSwipeHintAction = createAction('trip/hint')<void>();
 export const resetAppState = createAction('trip/reset')<void>();
+
+
+export const setCurrentPositionAction = createAction('trip/currentPosition')<[number, number]>()
+export const setSelectedPOIAction = createAction('trip/selectedPOI')<POI | null>()
+export const updatePOIAction = createAction('trip/updatePOI')<POI>()
+
+export const deletePOIActions = createAsyncAction(
+    'DELETE_POI_REQUEST',
+    'DELETE_POI_SUCCESS',
+    'DELETE_POI_FAILURE'
+)<void, void, Error>();
+
+export const deletePOIAction = (tripId: string, poiId: string) =>
+    (dispatch: Dispatch<AnyAction>, getState: () => AppState) => {
+        dispatch(deletePOIActions.request());
+        return removePOI(getState().tLogApp.user.token || '', tripId, poiId).then(trip => {
+            dispatch(setSelectedPOIAction(null));
+            dispatch(fetchTripActions.success(trip));
+        })
+            .catch(err => dispatch(fetchTripActions.failure(err)))
+    }
+
