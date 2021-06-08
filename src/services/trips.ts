@@ -89,3 +89,49 @@ export const fetchTrip = (token: string | null, id: string) =>
 export const deleteTrip = (token: string | null, id: string) =>
     endpoint.delete<boolean>(`${config.tripURI}/${id}`, { headers: createAuthenticationHeader(token) })
         .then(r => true);
+
+export const uploadImage = (token: string, poiId: string, fileName: string, description?: string) => {
+    const formData = new FormData();
+    console.log('Prepare to Upload Image')
+    if (description) { formData.append('description', description) }
+    return fetch(fileName)
+        .then(r => {
+            console.log('Returned from fetch with status ' + r.status);
+            if (r.status >= 300) {
+                throw new Error(r.statusText);
+            }
+            return r.blob()
+        })
+        .then(blob => {
+            console.log('Successfully got blob!');
+            formData.append('file', blob, 'test.jpeg');
+            return formData
+        })
+        .then(fd => endpoint.post<POI>(`${config.poiURL}/${poiId}/image`, formData, {
+            headers:
+                { ...createAuthenticationHeader(token), 'Content-Type': 'multipart/form-data' }
+        }))
+        .then(r => {
+            if (r.status >= 300) {
+                throw new Error(r.statusText);
+            }
+            return r.data;
+        })
+}
+
+export const getImageURL = (token: string, imageId: string): Promise<string> => {
+    const url = `${serverConfig.poiURL}/images/${imageId}`;
+    const urlCreator = window.URL || (window as any).webkitURL;
+    return fetch(url, { headers: createAuthenticationHeader(token) })
+        .then(r => {
+            console.log('Returned from fetch with status ' + r.status);
+            if (r.status >= 300) {
+                throw new Error(r.statusText);
+            }
+            return r.blob()
+        })
+        .then(
+            blob => urlCreator.createObjectURL(blob)
+        )
+
+}

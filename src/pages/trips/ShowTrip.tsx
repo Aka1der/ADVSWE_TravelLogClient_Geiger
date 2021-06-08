@@ -19,7 +19,7 @@ import {
 } from '@ionic/react';
 import {executeDelayed} from "../../helpers/async-helpers";
 import {Plugins} from "@capacitor/core";
-import {addCircleOutline, locate, trashOutline, eyeOutline, chevronUpCircleOutline} from "ionicons/icons";
+import {addCircleOutline, locate, trashOutline, eyeOutline, chevronUpCircleOutline, camera} from "ionicons/icons";
 import {
     deletePOIActions, deleteTripActions,
     fetchTripAction,
@@ -212,7 +212,7 @@ export const ShowTrip: FunctionComponent<RouteComponentProps<{ id: string }>> = 
                         console.log('Adding Markers!')
                         const markers = pois?.map(poi => {
                             console.log("SelectedPOI: " + JSON.stringify(selectedPOI));
-                            const markerIcon = icon(chooseIcon(poi.type), selectedPOI && (selectedPOI._id === poi._id) ? 'green' : defaultColor)
+                            const markerIcon = icon(chooseIcon(poi.type), defaultColor);
                             const marker = L.marker(poi.loc.coordinates as [number, number],
                                 { title: poi.name, icon: markerIcon })
                             marker.on('click', (e) => {
@@ -285,6 +285,10 @@ export const ShowTrip: FunctionComponent<RouteComponentProps<{ id: string }>> = 
                                 <IonIcon icon={chevronUpCircleOutline} />
                             </IonFabButton>
                             <IonFabList side="top">
+                                <IonFabButton>
+                                    <IonIcon icon={camera}
+                                             onClick={(e:any) => { history.push(`/trips/poi/addImage/${currentTrip && currentTrip._id}/${selectedPOI ? selectedPOI._id : ''}`) }} />
+                                </IonFabButton>
                                 <IonFabButton>
                                     <IonIcon icon={trashOutline} onClick={e => {
                                         e.preventDefault();

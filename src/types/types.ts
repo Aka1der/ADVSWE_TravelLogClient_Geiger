@@ -21,6 +21,13 @@ export interface POI {
     loc: GeoJSON.Point;
     creator?: any;
     createdAt?: Date;
+    images?: Image[];
+}
+export interface Image {
+    id: string,
+    description?: string,
+    uploaded: Date,
+    user: string
 }
 
 export type POIType =  'current'|'bar'|'sight'|'restaurant'|'museum'|'church'|'pub'|'hotel';
